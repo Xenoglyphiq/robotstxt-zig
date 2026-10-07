@@ -8,10 +8,8 @@ Requires Zig **0.17.0**. Standard library only: HTTP is `std.http.Client`.
 
 ## Install
 
-**Not released yet.** Until the first release, fetch the default branch:
-
 ```
-zig fetch --save git+https://github.com/Xenoglyphiq/robotstxt-zig
+zig fetch --save git+https://github.com/Xenoglyphiq/robotstxt-zig#v0.1.0
 ```
 
 Then in `build.zig`:
