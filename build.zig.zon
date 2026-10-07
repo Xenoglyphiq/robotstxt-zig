@@ -1,6 +1,6 @@
 .{
     .name = .robotstxt,
-    .version = "0.0.0",
+    .version = "0.1.0",
     .fingerprint = 0x42b262834e308b9b, // Changing this has security and trust implications.
     .minimum_zig_version = "0.17.0",
     .dependencies = .{},
