@@ -122,7 +122,7 @@ Errors are the error set `robotstxt.Error`, whose names are the spec's kinds: `I
 |---|---|
 | `robotstxt.invalid_user_agent` | `user_agent` is empty or has characters outside `[A-Za-z_-]` (checked first) |
 | `robotstxt.invalid_path` | `path` doesn't start with `/` |
-| `robotstxt.invalid_origin` | `fetch`'s origin isn't `http://` or `https://`, an authority, and at most a trailing `/` |
+| `robotstxt.invalid_origin` | `fetch`'s origin isn't `http://` or `https://`, a host and optional port (no userinfo), and at most a trailing `/` |
 
 `parse` never fails. A failed fetch is a policy, not an error.
 

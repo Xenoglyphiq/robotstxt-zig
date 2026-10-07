@@ -147,7 +147,8 @@ pub const HttpTransport = struct {
 };
 
 /// Checks that `origin` is `http://` or `https://`, an authority (host and
-/// optional port), and at most a trailing `/`. Returns it without the slash.
+/// optional port, no userinfo), and at most a trailing `/`. Returns it
+/// without the slash.
 fn checkOrigin(origin: []const u8, diag: ?*Diagnostics) Error![]const u8 {
     const rest = if (std.mem.startsWith(u8, origin, "http://"))
         origin["http://".len..]
@@ -158,7 +159,7 @@ fn checkOrigin(origin: []const u8, diag: ?*Diagnostics) Error![]const u8 {
     const authority = if (std.mem.endsWith(u8, rest, "/")) rest[0 .. rest.len - 1] else rest;
     if (authority.len == 0) return fail(diag, "invalid_origin", error.InvalidInput);
     for (authority) |c| switch (c) {
-        '/', '?', '#', 0...' ', 0x7F => return fail(diag, "invalid_origin", error.InvalidInput),
+        '/', '?', '#', '@', 0...' ', 0x7F => return fail(diag, "invalid_origin", error.InvalidInput),
         else => {},
     };
     return origin[0 .. origin.len - (rest.len - authority.len)];
@@ -406,9 +407,10 @@ test "fetch: invalid origins" {
     var script: Scripted = .{ .responses = &.{} };
     var diag: Diagnostics = .{};
     for ([_][]const u8{
-        "",                      "example.com",           "ftp://example.com",     "https://",
-        "https:///",             "https://example.com/x", "https://example.com?a", "https://example.com#f",
-        "https://example.com//", "https://exa mple.com",  "HTTPS://example.com",
+        "",                              "example.com",           "ftp://example.com",     "https://",
+        "https:///",                     "https://example.com/x", "https://example.com?a", "https://example.com#f",
+        "https://example.com//",         "https://exa mple.com",  "HTTPS://example.com",   "https://user:secret@example.com",
+        "http://user@example.com:8080/",
     }) |origin| {
         try testing.expectError(error.InvalidInput, fetch(testing.allocator, script.transport(), origin, .{}, &diag));
         try testing.expectEqualStrings("robotstxt.invalid_origin", diag.code);
