@@ -149,7 +149,11 @@ Matching never backtracks: each literal piece between `*`s is found greedily, le
 
 ## Performance
 
-Not recorded yet. The spec's bench input arrives in spec 0.1.x; the timing against the reference (target: within 2×) will be recorded here before the first release.
+| Benchmark | Reference | This port | Ratio |
+|---|---|---|---|
+| `parse` + `isAllowed` pass | Rust `texting_robots` 0.2.2: 13.10 ms | 14.26 ms | 1.09× |
+
+One pass parses the 79,936-byte `bench/robots.txt` once per crawler (10 times) and checks 10,000 paths; method in `.spec/bench/README.md`. Recorded 2026-10-06 on an Apple M5 Pro, interleaved with the reference in one session (median of three rounds); checksum 24281055 reproduced every pass. Zig 0.17.0, ReleaseFast.
 
 ## License
 
