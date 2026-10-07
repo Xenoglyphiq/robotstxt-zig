@@ -2,7 +2,7 @@
 
 Parse robots.txt files and decide whether a crawler may fetch a path, which rule decided, and what an HTTP status for the file means; fetch an origin's `/robots.txt` over HTTP or any transport you plug in. Implements RFC 9309 · Spec v0.1.0 · Conformance: **core ✓ io ✓ full ✓** (125/125)
 
-> **`Crawl-delay` is an extension, not RFC 9309.** It's parsed and returned by `crawlDelay`, kept apart from the rules, and never affects `isAllowed`.
+> **`Crawl-delay` is an extension, not RFC 9309.** It's parsed and returned by `crawlDelay`, kept apart from the rules, and never affects `isAllowed`. A group keeps its first value that is a non-negative decimal and finite as an `f64`.
 
 Requires Zig **0.17.0**. Standard library only: HTTP is `std.http.Client`.
 
@@ -105,7 +105,7 @@ User agents, patterns and sitemaps are reported as UTF-8, with invalid bytes rep
 | `HttpTransport{ .client, .user_agent }` | `std.http.Client`. No automatic redirects; sends `Accept-Encoding: identity` and still decodes a gzip, deflate or zstd body; reads at most `max_bytes + 1` body bytes |
 | your own | any `Transport{ .ptr, .vtable }` whose `get(ptr, gpa, url, max_body)` returns `{ status, location, body }` or `error.NoResponse` |
 
-No response (connection or TLS failure) is `disallow_all`. Redirects resolve `Location` against the current URL (RFC 3986). One redirect past `max_redirects`, a redirect without `Location`, or one to a URL that isn't `http` or `https` is `allow_all` (the file is unavailable). `std.http.Client` has no timeouts, so neither does `HttpTransport`; a transport of your own can add them.
+No response (connection or TLS failure) is `disallow_all`. Redirects resolve `Location` against the current URL (RFC 3986: dot segments removed, fragment dropped). One redirect past `max_redirects`, or a redirect without `Location` (or an empty one), is `allow_all`: the file is unavailable. A redirect to a URL that isn't `http` or `https` gets no response, so it's `disallow_all`. `std.http.Client` has no timeouts, so neither does `HttpTransport`; a transport of your own can add them.
 
 ## Limits and errors
 

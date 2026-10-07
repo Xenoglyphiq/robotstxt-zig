@@ -25,8 +25,9 @@ pub const FetchPolicy = enum {
     /// The file is unavailable (4xx except 429, too many redirects, or a
     /// redirect with no `Location`): the crawler may fetch anything.
     allow_all,
-    /// The site is unreachable (no response, 429, 5xx, or a status outside
-    /// 200–599): the crawler should fetch nothing.
+    /// The site is unreachable (no response, including a redirect to a URL
+    /// that isn't `http` or `https`; 429, 5xx, or a status outside 200–599):
+    /// the crawler should fetch nothing.
     disallow_all,
 };
 
@@ -191,7 +192,9 @@ pub fn fetch(gpa: Allocator, transport: Transport, origin: []const u8, opts: Opt
                 if (redirects == opts.max_redirects) return unavailable;
                 const location = res.location orelse return unavailable;
                 if (location.len == 0) return unavailable;
-                const next = (try resolve(gpa, url, location)) orelse return unavailable;
+                // A URL that isn't http or https gets no response: unreachable.
+                const next = (try resolve(gpa, url, location)) orelse
+                    return .{ .policy = .disallow_all, .status = null, .robots = null };
                 gpa.free(url);
                 url = next;
                 redirects += 1;
@@ -480,21 +483,23 @@ test "fetch: statuses, redirects and limits" {
         defer got.deinit();
         try testing.expectEqual(FetchPolicy.allow_all, got.policy);
     }
-    // A redirect to something that isn't http(s), or an empty Location: unavailable.
-    for ([_][]const u8{ "ftp://x.example/robots.txt", "" }) |location| {
-        var script: Scripted = .{ .responses = &.{.{ .url = "https://x.example/robots.txt", .status = 302, .location = location }} };
+    // An empty Location counts as missing: unavailable.
+    {
+        var script: Scripted = .{ .responses = &.{.{ .url = "https://x.example/robots.txt", .status = 302, .location = "" }} };
         var got = try fetch(gpa, script.transport(), "https://x.example", .{}, null);
         defer got.deinit();
         try testing.expectEqual(FetchPolicy.allow_all, got.policy);
         try testing.expectEqual(@as(?u32, 302), got.status);
     }
-    // A redirect to a URL with no response: unreachable.
-    {
-        var script: Scripted = .{ .responses = &.{.{ .url = "https://x.example/robots.txt", .status = 302, .location = "/gone" }} };
+    // A redirect to a URL with no response, or to one that isn't http(s): unreachable.
+    // The non-http(s) URL is never requested.
+    for ([_]struct { []const u8, usize }{ .{ "/gone", 2 }, .{ "ftp://x.example/robots.txt", 1 } }) |c| {
+        var script: Scripted = .{ .responses = &.{.{ .url = "https://x.example/robots.txt", .status = 302, .location = c[0] }} };
         var got = try fetch(gpa, script.transport(), "https://x.example", .{}, null);
         defer got.deinit();
         try testing.expectEqual(FetchPolicy.disallow_all, got.policy);
         try testing.expectEqual(@as(?u32, null), got.status);
+        try testing.expectEqual(c[1], script.calls);
     }
     for ([_]struct { u32, FetchPolicy }{ .{ 404, .allow_all }, .{ 429, .disallow_all }, .{ 500, .disallow_all }, .{ 199, .disallow_all } }) |c| {
         var script: Scripted = .{ .responses = &.{.{ .url = "https://x.example/robots.txt", .status = c[0], .body = body }} };

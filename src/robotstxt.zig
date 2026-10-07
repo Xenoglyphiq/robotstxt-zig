@@ -252,8 +252,12 @@ pub fn parse(gpa: Allocator, data: []const u8, opts: Options) Allocator.Error!Ro
         } else if (std.ascii.eqlIgnoreCase(kv.key, "crawl-delay")) {
             const g = current orelse continue;
             agents_open = false; // a group member, like allow and disallow (D-009)
-            if (g.crawl_delay == null and isDecimal(kv.value))
-                g.crawl_delay = std.fmt.parseFloat(f64, kv.value) catch unreachable;
+            // The first non-negative decimal that is finite as an f64 wins;
+            // anything else (even 400 nines) is skipped.
+            if (g.crawl_delay == null and isDecimal(kv.value)) {
+                const d = std.fmt.parseFloat(f64, kv.value) catch unreachable;
+                if (std.math.isFinite(d)) g.crawl_delay = d;
+            }
         } else if (std.ascii.eqlIgnoreCase(kv.key, "sitemap")) {
             if (kv.value.len > 0) try sitemaps.append(a, try lossyUtf8(a, kv.value));
         }
@@ -664,6 +668,16 @@ test "parse: keys, missing colons, comments and line numbers" {
 test "parse: crawl-delay must be a non-negative decimal" {
     for ([_][]const u8{ "1", "0", "10.25", "007" }) |ok| try testing.expect(isDecimal(ok));
     for ([_][]const u8{ "", "-1", "1.", ".5", "1e3", "1.2.3", "+1", " 1", "inf" }) |bad| try testing.expect(!isDecimal(bad));
+    // Too large to be finite: skipped, and a later valid value is kept.
+    const gpa = testing.allocator;
+    var text: std.ArrayList(u8) = .empty;
+    defer text.deinit(gpa);
+    try text.appendSlice(gpa, "User-agent: a\nCrawl-delay: ");
+    try text.appendNTimes(gpa, '9', 400);
+    try text.appendSlice(gpa, "\nCrawl-delay: 4\n");
+    var robots = try parse(gpa, text.items, .{});
+    defer robots.deinit();
+    try testing.expectEqual(@as(?f64, 4), robots.groups[0].crawl_delay);
 }
 
 test "lossyUtf8: maximal subparts become U+FFFD" {
@@ -822,7 +836,7 @@ fn fuzzMatching(context: void, smith: *testing.Smith) !void {
             try testing.expect(r.line > prev_line); // rules follow file order
             prev_line = r.line;
         }
-        if (g.crawl_delay) |d| try testing.expect(d >= 0);
+        if (g.crawl_delay) |d| try testing.expect(d >= 0 and std.math.isFinite(d));
     }
     for (robots.sitemaps) |s| try testing.expect(s.len > 0 and std.unicode.utf8ValidateSlice(s));
 
