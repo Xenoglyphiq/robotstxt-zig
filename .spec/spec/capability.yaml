@@ -1,0 +1,143 @@
+# robots.txt — capability manifest (validated by .kit/schemas/capability.schema.json).
+id: robotstxt
+name: robots.txt
+summary: "Parse robots.txt files and decide whether a crawler may fetch a path, per RFC 9309 (the Robots Exclusion Protocol)."
+spec_version: 0.1.0
+
+implements:
+  - name: RFC 9309 (Robots Exclusion Protocol)
+    version: "RFC 9309"
+    url: https://www.rfc-editor.org/rfc/rfc9309.html
+    scope: "parsing, matching and the status-code policy; Crawl-delay as a marked extension"
+
+types:
+  - name: Rule
+    kind: struct
+    doc: One allow or disallow line.
+    fields:
+      - { name: allow, type: bool }
+      - { name: pattern, type: string, doc: "As written, trimmed; not normalized" }
+      - { name: line, type: u32, doc: "1-based line number in the file" }
+  - name: Group
+    kind: struct
+    doc: "One or more user-agent lines and the group members that follow them."
+    fields:
+      - { name: user_agents, type: list<string>, doc: "Values as written, trimmed" }
+      - { name: rules, type: list<Rule> }
+      - { name: crawl_delay, type: optional<f64>, unit: seconds, doc: "Extension, not RFC 9309: the group's first valid Crawl-delay" }
+  - name: RobotsFile
+    kind: struct
+    fields:
+      - { name: groups, type: list<Group> }
+      - { name: sitemaps, type: list<string>, doc: "In file order" }
+      - { name: truncated, type: bool, doc: "The input was longer than max_bytes" }
+  - name: StatusPolicy
+    kind: enum
+    doc: What an HTTP status for /robots.txt means (RFC 9309 §2.3.1).
+    values:
+      - { name: parse }
+      - { name: follow_redirect }
+      - { name: allow_all }
+      - { name: disallow_all }
+  - name: FetchPolicy
+    kind: enum
+    doc: How fetch arrived at its RobotsFile.
+    values:
+      - { name: parsed }
+      - { name: allow_all }
+      - { name: disallow_all }
+  - name: Fetched
+    kind: struct
+    fields:
+      - { name: policy, type: FetchPolicy }
+      - { name: status, type: optional<u32>, doc: "The final HTTP status; absent when unreachable" }
+      - { name: robots, type: optional<RobotsFile>, doc: "Present when policy is parsed" }
+
+operations:
+  - name: parse
+    layer: core
+    doc: Parse a robots.txt file. Lenient; never fails.
+    inputs: [{ name: data, type: bytes_view }]
+    output: RobotsFile
+    errors: []
+    uses_limits: [max_bytes]
+
+  - name: is_allowed
+    layer: core
+    doc: Whether the crawler may fetch the path.
+    inputs:
+      - { name: robots, type: RobotsFile }
+      - { name: user_agent, type: string, doc: "The crawler's product token, [A-Za-z_-]+" }
+      - { name: path, type: string, doc: "Starts with /; includes the query" }
+    output: bool
+    errors: [robotstxt.invalid_user_agent, robotstxt.invalid_path]
+
+  - name: matching_rule
+    layer: core
+    doc: The rule that decides is_allowed, or absent when none does.
+    inputs:
+      - { name: robots, type: RobotsFile }
+      - { name: user_agent, type: string }
+      - { name: path, type: string }
+    output: optional<Rule>
+    errors: [robotstxt.invalid_user_agent, robotstxt.invalid_path]
+    absence: optional
+
+  - name: crawl_delay
+    layer: core
+    doc: "Extension, not RFC 9309: the Crawl-delay that applies to the crawler, in seconds."
+    inputs:
+      - { name: robots, type: RobotsFile }
+      - { name: user_agent, type: string }
+    output: optional<f64>
+    errors: [robotstxt.invalid_user_agent]
+    absence: optional
+
+  - name: status_policy
+    layer: core
+    doc: What the HTTP status of a /robots.txt fetch means.
+    inputs: [{ name: http_status, type: u32 }]
+    output: StatusPolicy
+    errors: []
+
+  - name: fetch
+    layer: io
+    doc: "Fetch origin/robots.txt, follow redirects, apply status_policy, and parse."
+    inputs: [{ name: origin, type: string, doc: "scheme://host[:port], http or https" }]
+    output: Fetched
+    errors: [robotstxt.invalid_origin]
+    uses_limits: [max_bytes, max_redirects]
+
+errors:
+  - { code: robotstxt.invalid_user_agent, kind: invalid_input, doc: "The user agent is empty or has characters outside [A-Za-z_-]" }
+  - { code: robotstxt.invalid_path, kind: invalid_input, doc: "The path doesn't start with /" }
+  - { code: robotstxt.invalid_origin, kind: invalid_input, doc: "Not an http or https origin (scheme and authority only)" }
+
+limits:
+  - { name: max_bytes, type: u64, default: 512000, reason: "RFC 9309 §2.5: parse at least 500 KiB; the rest is ignored" }
+  - { name: max_redirects, type: u32, default: 5, reason: "RFC 9309 §2.3.1.2: follow at least five redirects" }
+
+examples:
+  - id: check_path
+    title: Check one path
+    steps: [Parse a sample robots.txt, "is_allowed for NowhereToBeBot on /private/page", Print allowed or disallowed]
+  - id: list_sitemaps
+    title: List the sitemaps
+    steps: [Parse a sample robots.txt, Print each sitemap URL in order]
+  - id: explain_decision
+    title: Explain a decision
+    steps: [Parse a sample robots.txt, matching_rule for a path, "Print the rule and its line, or that no rule applies"]
+
+conformance:
+  oracle: { language: python, package: protego, version: "0.7.0" }
+  manifest: conformance/manifest.json
+  levels: [core, io, full]
+
+performance:
+  reference: "To be pinned with the bench input (a compiled Google-compatible parser)"
+  target: within 2x of reference
+
+ports:
+  - { language: julia, status: planned, package: RobotsTxt, dependency_tier: T0 }
+  - { language: swift, status: planned, package: RobotsTxt, dependency_tier: T0, toolchain: "Swift tools 6.0" }
+  - { language: zig, status: planned, package: robotstxt, dependency_tier: T0 }

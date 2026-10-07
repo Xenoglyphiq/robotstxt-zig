@@ -1,0 +1,2912 @@
+{
+  "capability": "robotstxt",
+  "spec_version": "0.1.0",
+  "oracle": {
+    "language": "python",
+    "package": "protego",
+    "version": "0.7.0",
+    "script": "generate/generate.py"
+  },
+  "generated_at": "2026-10-06T00:00:00Z",
+  "cases": [
+    {
+      "id": "syntax.correct",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "syntax",
+      "description": "Well-formed group (Google robots_test.cc ID_LineSyntax_Line)",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "syntax.unknown_keys",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "syntax",
+      "description": "Unknown keys are ignored (Google robots_test.cc ID_LineSyntax_Line)",
+      "input": {
+        "value": "foo: FooBot\nbar: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "syntax.missing_colon",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "syntax",
+      "description": "A missing colon is accepted when the line is exactly two words (D-006) (Google robots_test.cc ID_LineSyntax_Line)",
+      "input": {
+        "value": "user-agent FooBot\ndisallow /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "groups.merged_x",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "Rules from both FooBot groups apply (Google robots_test.cc ID_LineSyntax_Groups)",
+      "input": {
+        "value": "allow: /foo/bar/\n\nuser-agent: FooBot\ndisallow: /\nallow: /x/\nuser-agent: BarBot\ndisallow: /\nallow: /y/\n\n\nallow: /w/\nuser-agent: BazBot\n\nuser-agent: FooBot\nallow: /z/\ndisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/b"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "groups.merged_z",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "Rules from both FooBot groups apply (Google robots_test.cc ID_LineSyntax_Groups)",
+      "input": {
+        "value": "allow: /foo/bar/\n\nuser-agent: FooBot\ndisallow: /\nallow: /x/\nuser-agent: BarBot\ndisallow: /\nallow: /y/\n\n\nallow: /w/\nuser-agent: BazBot\n\nuser-agent: FooBot\nallow: /z/\ndisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/z/d"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "groups.other_group",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "BarBot's allow doesn't apply to FooBot (Google robots_test.cc ID_LineSyntax_Groups)",
+      "input": {
+        "value": "allow: /foo/bar/\n\nuser-agent: FooBot\ndisallow: /\nallow: /x/\nuser-agent: BarBot\ndisallow: /\nallow: /y/\n\n\nallow: /w/\nuser-agent: BazBot\n\nuser-agent: FooBot\nallow: /z/\ndisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/y/c"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "groups.bar_y",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "BarBot's own allow (Google robots_test.cc ID_LineSyntax_Groups)",
+      "input": {
+        "value": "allow: /foo/bar/\n\nuser-agent: FooBot\ndisallow: /\nallow: /x/\nuser-agent: BarBot\ndisallow: /\nallow: /y/\n\n\nallow: /w/\nuser-agent: BazBot\n\nuser-agent: FooBot\nallow: /z/\ndisallow: /\n",
+        "args": {
+          "user_agent": "BarBot",
+          "path": "/y/c"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "groups.bar_w",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "A rule after blank lines still belongs to the group (Google robots_test.cc ID_LineSyntax_Groups)",
+      "input": {
+        "value": "allow: /foo/bar/\n\nuser-agent: FooBot\ndisallow: /\nallow: /x/\nuser-agent: BarBot\ndisallow: /\nallow: /y/\n\n\nallow: /w/\nuser-agent: BazBot\n\nuser-agent: FooBot\nallow: /z/\ndisallow: /\n",
+        "args": {
+          "user_agent": "BarBot",
+          "path": "/w/a"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "groups.bar_z",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "FooBot's allow doesn't apply to BarBot (Google robots_test.cc ID_LineSyntax_Groups)",
+      "input": {
+        "value": "allow: /foo/bar/\n\nuser-agent: FooBot\ndisallow: /\nallow: /x/\nuser-agent: BarBot\ndisallow: /\nallow: /y/\n\n\nallow: /w/\nuser-agent: BazBot\n\nuser-agent: FooBot\nallow: /z/\ndisallow: /\n",
+        "args": {
+          "user_agent": "BarBot",
+          "path": "/z/d"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "groups.baz_shares_group",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "Consecutive user-agent lines share one group, blank lines between them too (Google robots_test.cc ID_LineSyntax_Groups)",
+      "input": {
+        "value": "allow: /foo/bar/\n\nuser-agent: FooBot\ndisallow: /\nallow: /x/\nuser-agent: BarBot\ndisallow: /\nallow: /y/\n\n\nallow: /w/\nuser-agent: BazBot\n\nuser-agent: FooBot\nallow: /z/\ndisallow: /\n",
+        "args": {
+          "user_agent": "BazBot",
+          "path": "/z/d"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "groups.rule_before_any_agent",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "A rule before any user-agent line is ignored (Google robots_test.cc ID_LineSyntax_Groups)",
+      "input": {
+        "value": "allow: /foo/bar/\n\nuser-agent: FooBot\ndisallow: /\nallow: /x/\nuser-agent: BarBot\ndisallow: /\nallow: /y/\n\n\nallow: /w/\nuser-agent: BazBot\n\nuser-agent: FooBot\nallow: /z/\ndisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar/"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "groups.sitemap_does_not_close",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "A sitemap line between user-agent lines doesn't end the group (Google robots_test.cc ID_LineSyntax_Groups_OtherRules)",
+      "input": {
+        "value": "User-agent: BarBot\nSitemap: https://foo.bar/sitemap\nUser-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "BarBot",
+          "path": "/"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "groups.unknown_does_not_close",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "An unknown line between user-agent lines doesn't end the group (D-009) (Google robots_test.cc ID_LineSyntax_Groups_OtherRules) (protego differs: an unknown line ends its agent list)",
+      "input": {
+        "value": "User-agent: FooBot\nInvalid-Unknown-Line: unknown\nUser-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "groups.crawl_delay_closes",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "groups",
+      "description": "Crawl-delay is a group member: it ends FooBot's agent list, so * doesn't apply to FooBot (D-009)",
+      "input": {
+        "value": "User-agent: FooBot\nCrawl-delay: 5\nUser-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "keys.upper.allowed",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "keys",
+      "description": "Keys are case-insensitive (Google robots_test.cc ID_REPLineNamesCaseInsensitive)",
+      "input": {
+        "value": "USER-AGENT: FooBot\nALLOW: /x/\nDISALLOW: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "keys.upper.disallowed",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "keys",
+      "description": "Keys are case-insensitive (Google robots_test.cc ID_REPLineNamesCaseInsensitive)",
+      "input": {
+        "value": "USER-AGENT: FooBot\nALLOW: /x/\nDISALLOW: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/a/b"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "keys.camel.allowed",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "keys",
+      "description": "Keys are case-insensitive (Google robots_test.cc ID_REPLineNamesCaseInsensitive)",
+      "input": {
+        "value": "uSeR-aGeNt: FooBot\nAlLoW: /x/\ndIsAlLoW: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "keys.camel.disallowed",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "keys",
+      "description": "Keys are case-insensitive (Google robots_test.cc ID_REPLineNamesCaseInsensitive)",
+      "input": {
+        "value": "uSeR-aGeNt: FooBot\nAlLoW: /x/\ndIsAlLoW: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/a/b"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "agent.value_case_insensitive",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "The group's token is the value up to the first character outside [A-Za-z_-], matched case-insensitively (Google robots_test.cc ID_UserAgentValueCaseInsensitive) (protego differs: matches the whole value)",
+      "input": {
+        "value": "User-Agent: FOO BAR\nAllow: /x/\nDisallow: /\n",
+        "args": {
+          "user_agent": "foo",
+          "path": "/a/b"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "agent.versioned",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "FooBot/2.1 applies to FooBot (D-001) (protego differs: matches the whole value)",
+      "input": {
+        "value": "User-agent: FooBot/2.1\nDisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "agent.prefix_is_not_a_match",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "foo doesn't apply to foobar: tokens must be equal (D-001) (protego differs: substring match)",
+      "input": {
+        "value": "User-agent: foo\nDisallow: /\n",
+        "args": {
+          "user_agent": "foobar",
+          "path": "/x"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "agent.own_group_no_rule",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "The crawler's own group decides even when none of its rules match; * doesn't apply (D-002)",
+      "input": {
+        "value": "User-agent: foobot\nAllow: /public\n\nUser-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "foobot",
+          "path": "/other"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "agent.empty_file",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "No groups: everything is allowed (Google robots_test.cc ID_GlobalGroups_Secondary)",
+      "input": {
+        "value": "",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "agent.specific_over_global",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "A specific group beats * (Google robots_test.cc ID_GlobalGroups_Secondary)",
+      "input": {
+        "value": "user-agent: *\nallow: /\nuser-agent: FooBot\ndisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "agent.global_fallback",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "No specific group: * applies (Google robots_test.cc ID_GlobalGroups_Secondary)",
+      "input": {
+        "value": "user-agent: *\nallow: /\nuser-agent: FooBot\ndisallow: /\n",
+        "args": {
+          "user_agent": "BarBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "agent.no_matching_group",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "No specific group and no *: everything is allowed (Google robots_test.cc ID_GlobalGroups_Secondary)",
+      "input": {
+        "value": "user-agent: FooBot\nallow: /\nuser-agent: BarBot\ndisallow: /\n",
+        "args": {
+          "user_agent": "QuxBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "agent.star_with_trailing_text",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "* followed by whitespace is still the global group (D-001) (protego differs: only exactly * is global)",
+      "input": {
+        "value": "User-agent: * nonsense\nDisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "agent.star_glued_is_not_global",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "*bot is neither the global group nor a token that can match (D-001)",
+      "input": {
+        "value": "User-agent: *bot\nDisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "agent.error.empty",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "The crawler's user agent must be a product token [A-Za-z_-]+ (D-003)",
+      "input": {
+        "value": "User-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "",
+          "path": "/x"
+        }
+      },
+      "expect": {
+        "error": {
+          "kind": "invalid_input",
+          "code": "robotstxt.invalid_user_agent"
+        }
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "agent.error.space",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "The crawler's user agent must be a product token [A-Za-z_-]+ (D-003)",
+      "input": {
+        "value": "User-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "Foo Bar",
+          "path": "/x"
+        }
+      },
+      "expect": {
+        "error": {
+          "kind": "invalid_input",
+          "code": "robotstxt.invalid_user_agent"
+        }
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "agent.error.version",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "The crawler's user agent must be a product token [A-Za-z_-]+ (D-003)",
+      "input": {
+        "value": "User-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "FooBot/2.1",
+          "path": "/x"
+        }
+      },
+      "expect": {
+        "error": {
+          "kind": "invalid_input",
+          "code": "robotstxt.invalid_user_agent"
+        }
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "agent.error.star",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "The crawler's user agent must be a product token [A-Za-z_-]+ (D-003)",
+      "input": {
+        "value": "User-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "*",
+          "path": "/x"
+        }
+      },
+      "expect": {
+        "error": {
+          "kind": "invalid_input",
+          "code": "robotstxt.invalid_user_agent"
+        }
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "agent.error.non_ascii",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "agent",
+      "description": "The crawler's user agent must be a product token [A-Za-z_-]+ (D-003)",
+      "input": {
+        "value": "User-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "\u30c4",
+          "path": "/x"
+        }
+      },
+      "expect": {
+        "error": {
+          "kind": "invalid_input",
+          "code": "robotstxt.invalid_user_agent"
+        }
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "match.longer_disallow",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Longer disallow wins (Google robots_test.cc ID_LongestMatch)",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /x/page.html\nallow: /x/\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/page.html"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.longer_allow",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Longer allow wins (Google robots_test.cc ID_LongestMatch)",
+      "input": {
+        "value": "user-agent: FooBot\nallow: /x/page.html\ndisallow: /x/\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/page.html"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.shorter_only",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Only the shorter rule matches (Google robots_test.cc ID_LongestMatch)",
+      "input": {
+        "value": "user-agent: FooBot\nallow: /x/page.html\ndisallow: /x/\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.empty_rules",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Empty allow and disallow add no rules",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: \nallow: \n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/page.html"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.tie_root",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Equal lengths: allow wins",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /\nallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/page.html"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.tie_page",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Equal lengths: allow wins (Google robots_test.cc ID_LongestMatch)",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /x/page.html\nallow: /x/page.html\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/page.html"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.slash_a",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "/x/ doesn't match /x (Google robots_test.cc ID_LongestMatch)",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /x\nallow: /x/\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.slash_b",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "/x/ is longer than /x (Google robots_test.cc ID_LongestMatch)",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /x\nallow: /x/\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.wildcard_longer",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Wildcard pattern length counts its *",
+      "input": {
+        "value": "user-agent: FooBot\nallow: /page\ndisallow: /*.html\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/page.html"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.wildcard_no_match",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Wildcard doesn't match",
+      "input": {
+        "value": "user-agent: FooBot\nallow: /page\ndisallow: /*.html\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/page"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.prefix_vs_wildcard",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Longer allow beats wildcard (Google robots_test.cc ID_LongestMatch)",
+      "input": {
+        "value": "user-agent: FooBot\nallow: /x/page.\ndisallow: /*.html\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/page.html"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.wildcard_other",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Wildcard disallow (Google robots_test.cc ID_LongestMatch)",
+      "input": {
+        "value": "user-agent: FooBot\nallow: /x/page.\ndisallow: /*.html\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/y.html"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.specific_group_implicit_allow",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "FooBot's group doesn't mention /x/: allowed",
+      "input": {
+        "value": "User-agent: *\nDisallow: /x/\nUser-agent: FooBot\nDisallow: /y/\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/page"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.specific_group_disallow",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "FooBot's own disallow",
+      "input": {
+        "value": "User-agent: *\nDisallow: /x/\nUser-agent: FooBot\nDisallow: /y/\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/y/page"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.case_sensitive_lower",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Paths are case-sensitive",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /x/\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.case_sensitive_upper",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Paths are case-sensitive",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /X/\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/y"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.query_counts",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "The query is part of the path",
+      "input": {
+        "value": "User-agent: *\nDisallow: /*?\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/search?q=1"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.no_query",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "No query: no match",
+      "input": {
+        "value": "User-agent: *\nDisallow: /*?\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/search"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "match.space_in_pattern",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "match",
+      "description": "Spaces inside a value are kept: /a b doesn't match /ab",
+      "input": {
+        "value": "User-agent: *\nDisallow: /a b\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/ab"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.star_disallowed",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "Literal disallow (Google robots_test.cc ID_SpecialCharacters)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /foo/bar/quz\nAllow: /foo/*/qux\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar/quz"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.star_empty",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "No rule matches (Google robots_test.cc ID_SpecialCharacters)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /foo/bar/quz\nAllow: /foo/*/qux\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/quz"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.star_double_slash",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "No rule matches (Google robots_test.cc ID_SpecialCharacters)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /foo/bar/quz\nAllow: /foo/*/qux\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo//quz"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.dollar_exact",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "$ anchors the end (Google robots_test.cc ID_SpecialCharacters)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /foo/bar$\nAllow: /foo/bar/qux\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.dollar_longer",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "$ doesn't match a longer path (Google robots_test.cc ID_SpecialCharacters)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /foo/bar$\nAllow: /foo/bar/qux\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar/"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.dollar_other",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "$ doesn't match a longer path (Google robots_test.cc ID_SpecialCharacters)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /foo/bar$\nAllow: /foo/bar/qux\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar/baz"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.comment_line",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "Comments are ignored (Google robots_test.cc ID_SpecialCharacters)",
+      "input": {
+        "value": "User-agent: FooBot\n# Disallow: /\nDisallow: /foo/quz#qux\nAllow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.comment_inline",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "An inline comment ends the value (Google robots_test.cc ID_SpecialCharacters)",
+      "input": {
+        "value": "User-agent: FooBot\n# Disallow: /\nDisallow: /foo/quz#qux\nAllow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/quz"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.dollar_pdf",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "A query after .pdf: $ doesn't match",
+      "input": {
+        "value": "User-agent: *\nDisallow: /*.pdf$\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/a.pdf?x=1"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.dollar_middle",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "$ is literal except at the end",
+      "input": {
+        "value": "User-agent: *\nDisallow: /a$b\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/a$b"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "special.robots_txt",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "special",
+      "description": "/robots.txt is always allowed (RFC \u00a72.2.2)",
+      "input": {
+        "value": "User-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/robots.txt"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "encoding.reserved_kept",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "encoding",
+      "description": "Reserved characters are compared as they are (Google robots_test.cc ID_Encoding)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /\nAllow: /foo/bar?qux=taz&baz=http://foo.bar?tar&par\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar?qux=taz&baz=http://foo.bar?tar&par"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "encoding.utf8_rule_encoded_path",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "encoding",
+      "description": "A non-ASCII rule matches its percent-encoded form (Google robots_test.cc ID_Encoding)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /\nAllow: /foo/bar/\u30c4\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar/%E3%83%84"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "encoding.utf8_rule_raw_path",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "encoding",
+      "description": "Raw non-ASCII in the path is encoded the same way, so it matches (Google says not; D-004) (Google robots_test.cc ID_Encoding)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /\nAllow: /foo/bar/\u30c4\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar/\u30c4"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "encoding.encoded_rule_raw_path",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "encoding",
+      "description": "Same as above, the other way round (Google says not; D-004) (Google robots_test.cc ID_Encoding)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /\nAllow: /foo/bar/%E3%83%84\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar/\u30c4"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "encoding.lowercase_hex",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "encoding",
+      "description": "Hex digits compare case-insensitively",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /\nAllow: /foo/bar/%e3%83%84\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar/%E3%83%84"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "encoding.unreserved_decoded",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "encoding",
+      "description": "%7E is an unreserved character: decoded before comparing (RFC \u00a72.2.2; Google says not; D-004)",
+      "input": {
+        "value": "User-agent: *\nDisallow: /%7Euser\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/~user"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "encoding.unreserved_rule_letters",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "encoding",
+      "description": "Encoded unreserved letters match the plain path (Google says not; D-004) (Google robots_test.cc ID_Encoding)",
+      "input": {
+        "value": "User-agent: FooBot\nDisallow: /\nAllow: /foo/bar/%62%61%7A\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/foo/bar/baz"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "encoding.reserved_not_decoded",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "encoding",
+      "description": "%2F is reserved: not decoded",
+      "input": {
+        "value": "User-agent: *\nDisallow: /a%2Fb\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/a/b"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "rule.longest",
+      "op": "matching_rule",
+      "level": "core",
+      "group": "matching_rule",
+      "description": "The longest matching rule",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /x/\nallow: /x/page\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/x/page.html"
+        }
+      },
+      "expect": {
+        "value": {
+          "allow": true,
+          "pattern": "/x/page",
+          "line": 3
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "rule.tie_is_allow",
+      "op": "matching_rule",
+      "level": "core",
+      "group": "matching_rule",
+      "description": "A tie reports the allow rule",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /p\nallow: /p\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/p"
+        }
+      },
+      "expect": {
+        "value": {
+          "allow": true,
+          "pattern": "/p",
+          "line": 3
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "rule.none",
+      "op": "matching_rule",
+      "level": "core",
+      "group": "matching_rule",
+      "description": "No rule matched: null",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /x/\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/y"
+        }
+      },
+      "expect": {
+        "value": null
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "rule.robots_txt",
+      "op": "matching_rule",
+      "level": "core",
+      "group": "matching_rule",
+      "description": "/robots.txt: null, no rule decides",
+      "input": {
+        "value": "User-agent: *\nDisallow: /\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/robots.txt"
+        }
+      },
+      "expect": {
+        "value": null
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "rule.first_of_equals",
+      "op": "matching_rule",
+      "level": "core",
+      "group": "matching_rule",
+      "description": "Equal rules: the first in the file",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /a\ndisallow: /a\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/a"
+        }
+      },
+      "expect": {
+        "value": {
+          "allow": false,
+          "pattern": "/a",
+          "line": 2
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "rule.across_groups",
+      "op": "matching_rule",
+      "level": "core",
+      "group": "matching_rule",
+      "description": "Rules from merged groups compete; line numbers are the file's",
+      "input": {
+        "value": "user-agent: FooBot\ndisallow: /a\n\nuser-agent: FooBot\ndisallow: /ab\n",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/abc"
+        }
+      },
+      "expect": {
+        "value": {
+          "allow": false,
+          "pattern": "/ab",
+          "line": 5
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.groups",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Two groups; crawl-delay recorded per group",
+      "input": {
+        "value": "User-agent: a\nUser-agent: b\nDisallow: /x\nCrawl-delay: 2.5\n\nUser-agent: c\nAllow: /y\n"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "a",
+                "b"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/x",
+                  "line": 3
+                }
+              ],
+              "crawl_delay": 2.5
+            },
+            {
+              "user_agents": [
+                "c"
+              ],
+              "rules": [
+                {
+                  "allow": true,
+                  "pattern": "/y",
+                  "line": 7
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.lines_unix",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Line numbers with \\n (Google robots_test.cc ID_LinesNumbersAreCountedCorrectly)",
+      "input": {
+        "value": "User-Agent: foo\nAllow: /some/path\nUser-Agent: bar\n\n\nDisallow: /\n"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "foo"
+              ],
+              "rules": [
+                {
+                  "allow": true,
+                  "pattern": "/some/path",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            },
+            {
+              "user_agents": [
+                "bar"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/",
+                  "line": 6
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.lines_dos",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Line numbers with \\r\\n (Google robots_test.cc ID_LinesNumbersAreCountedCorrectly)",
+      "input": {
+        "value": "User-Agent: foo\r\nAllow: /some/path\r\nUser-Agent: bar\r\n\r\n\r\nDisallow: /\r\n"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "foo"
+              ],
+              "rules": [
+                {
+                  "allow": true,
+                  "pattern": "/some/path",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            },
+            {
+              "user_agents": [
+                "bar"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/",
+                  "line": 6
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.lines_mac",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Line numbers with \\r (Google robots_test.cc ID_LinesNumbersAreCountedCorrectly)",
+      "input": {
+        "value": "User-Agent: foo\rAllow: /some/path\rUser-Agent: bar\r\r\rDisallow: /\r"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "foo"
+              ],
+              "rules": [
+                {
+                  "allow": true,
+                  "pattern": "/some/path",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            },
+            {
+              "user_agents": [
+                "bar"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/",
+                  "line": 6
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.lines_mixed",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Mixed line endings, no final newline (Google robots_test.cc ID_LinesNumbersAreCountedCorrectly)",
+      "input": {
+        "value": "User-Agent: foo\nAllow: /some/path\r\nUser-Agent: bar\n\r\n\nDisallow: /"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "foo"
+              ],
+              "rules": [
+                {
+                  "allow": true,
+                  "pattern": "/some/path",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            },
+            {
+              "user_agents": [
+                "bar"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/",
+                  "line": 6
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.bom_full",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "A UTF-8 byte order mark is skipped (Google robots_test.cc ID_UTF8ByteOrderMarkIsSkipped)",
+      "input": {
+        "base64": "77u/VXNlci1BZ2VudDogZm9vCkFsbG93OiAvQW55VmFsdWUK"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "foo"
+              ],
+              "rules": [
+                {
+                  "allow": true,
+                  "pattern": "/AnyValue",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.bom_partial2",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "A partial byte order mark is skipped (Google robots_test.cc ID_UTF8ByteOrderMarkIsSkipped)",
+      "input": {
+        "base64": "77tVc2VyLUFnZW50OiBmb28KQWxsb3c6IC9BbnlWYWx1ZQo="
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "foo"
+              ],
+              "rules": [
+                {
+                  "allow": true,
+                  "pattern": "/AnyValue",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.bom_partial1",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "A partial byte order mark is skipped (Google robots_test.cc ID_UTF8ByteOrderMarkIsSkipped)",
+      "input": {
+        "base64": "71VzZXItQWdlbnQ6IGZvbwpBbGxvdzogL0FueVZhbHVlCg=="
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "foo"
+              ],
+              "rules": [
+                {
+                  "allow": true,
+                  "pattern": "/AnyValue",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.bom_broken",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "A broken byte order mark spoils the first line (Google robots_test.cc ID_UTF8ByteOrderMarkIsSkipped)",
+      "input": {
+        "base64": "7xG/VXNlci1BZ2VudDogZm9vCkFsbG93OiAvQW55VmFsdWUK"
+      },
+      "expect": {
+        "value": {
+          "groups": [],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.bom_middle",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "A byte order mark later in the file is just bytes, so that line's key is unknown (Google robots_test.cc ID_UTF8ByteOrderMarkIsSkipped)",
+      "input": {
+        "value": "User-Agent: foo\n\ufeffAllow: /AnyValue\n"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "foo"
+              ],
+              "rules": [],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.sitemap_end",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Sitemap after the groups (Google robots_test.cc ID_NonStandardLineExample_Sitemap)",
+      "input": {
+        "value": "User-Agent: foo\nAllow: /some/path\nUser-Agent: bar\n\n\nSitemap: http://foo.bar/sitemap.xml\n"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "foo"
+              ],
+              "rules": [
+                {
+                  "allow": true,
+                  "pattern": "/some/path",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            },
+            {
+              "user_agents": [
+                "bar"
+              ],
+              "rules": [],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [
+            "http://foo.bar/sitemap.xml"
+          ],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.sitemap_start",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Sitemap before the groups (Google robots_test.cc ID_NonStandardLineExample_Sitemap)",
+      "input": {
+        "value": "Sitemap: http://foo.bar/sitemap.xml\nUser-Agent: foo\nAllow: /some/path\n"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "foo"
+              ],
+              "rules": [
+                {
+                  "allow": true,
+                  "pattern": "/some/path",
+                  "line": 3
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [
+            "http://foo.bar/sitemap.xml"
+          ],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.sitemaps_in_order",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Every sitemap, in file order; sitemap lines don't belong to groups",
+      "input": {
+        "value": "Sitemap: https://a.example/1.xml\nUser-agent: *\nSitemap: https://a.example/2.xml\nDisallow: /x\n"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "*"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/x",
+                  "line": 4
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [
+            "https://a.example/1.xml",
+            "https://a.example/2.xml"
+          ],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.invalid_utf8",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Invalid UTF-8 is tolerated; the value is reported with U+FFFD",
+      "input": {
+        "base64": "VXNlci1hZ2VudDogKgpEaXNhbGxvdzogL2NhZukK"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "*"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/caf\ufffd",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.crawl_delay_invalid",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Crawl-delay values that aren't non-negative decimals are skipped; the first valid one is kept",
+      "input": {
+        "value": "User-agent: a\nCrawl-delay: soon\nCrawl-delay: -1\nCrawl-delay: 3\nDisallow: /\n"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "a"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/",
+                  "line": 5
+                }
+              ],
+              "crawl_delay": 3.0
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.truncated_line_dropped",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "The limit cuts the third line: it's dropped, and truncated is set (D-005)",
+      "input": {
+        "value": "User-agent: *\nDisallow: /a\nDisallow: /b\n"
+      },
+      "options": {
+        "max_bytes": 38
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "*"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/a",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": true
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.truncated_on_boundary",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "The limit falls just after a newline: nothing is cut mid-line",
+      "input": {
+        "value": "User-agent: *\nDisallow: /a\nDisallow: /b\n"
+      },
+      "options": {
+        "max_bytes": 27
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "*"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/a",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": true
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.not_truncated",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "Exactly at the limit: not truncated",
+      "input": {
+        "value": "User-agent: *\nDisallow: /a\nDisallow: /b\n"
+      },
+      "options": {
+        "max_bytes": 40
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "*"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/a",
+                  "line": 2
+                },
+                {
+                  "allow": false,
+                  "pattern": "/b",
+                  "line": 3
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "crawl_delay.specific",
+      "op": "crawl_delay",
+      "level": "core",
+      "group": "crawl_delay",
+      "description": "The crawler's own group (extension, not RFC 9309)",
+      "input": {
+        "value": "User-agent: *\nCrawl-delay: 10\n\nUser-agent: FooBot\nCrawl-delay: 2.5\nDisallow: /x\n",
+        "args": {
+          "user_agent": "FooBot"
+        }
+      },
+      "expect": {
+        "value": 2.5
+      },
+      "compare": "float_tol",
+      "tolerance": 1e-12,
+      "source": "oracle"
+    },
+    {
+      "id": "crawl_delay.global",
+      "op": "crawl_delay",
+      "level": "core",
+      "group": "crawl_delay",
+      "description": "Falls back to * (extension, not RFC 9309)",
+      "input": {
+        "value": "User-agent: *\nCrawl-delay: 10\nDisallow: /x\n",
+        "args": {
+          "user_agent": "FooBot"
+        }
+      },
+      "expect": {
+        "value": 10.0
+      },
+      "compare": "float_tol",
+      "tolerance": 1e-12,
+      "source": "oracle"
+    },
+    {
+      "id": "crawl_delay.none",
+      "op": "crawl_delay",
+      "level": "core",
+      "group": "crawl_delay",
+      "description": "No crawl-delay: null (extension, not RFC 9309)",
+      "input": {
+        "value": "User-agent: *\nDisallow: /x\n",
+        "args": {
+          "user_agent": "FooBot"
+        }
+      },
+      "expect": {
+        "value": null
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "status.200",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "2xx: parse",
+      "input": {
+        "value": 200
+      },
+      "expect": {
+        "value": "parse"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.204",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "2xx: parse",
+      "input": {
+        "value": 204
+      },
+      "expect": {
+        "value": "parse"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.301",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "3xx: follow the redirect",
+      "input": {
+        "value": 301
+      },
+      "expect": {
+        "value": "follow_redirect"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.308",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "3xx",
+      "input": {
+        "value": 308
+      },
+      "expect": {
+        "value": "follow_redirect"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.400",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "4xx: unavailable, allow all",
+      "input": {
+        "value": 400
+      },
+      "expect": {
+        "value": "allow_all"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.403",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "4xx, including 401/403: allow all (RFC \u00a72.3.1.3)",
+      "input": {
+        "value": 403
+      },
+      "expect": {
+        "value": "allow_all"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.404",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "4xx",
+      "input": {
+        "value": 404
+      },
+      "expect": {
+        "value": "allow_all"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.429",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "429: treated as unreachable, disallow all (D-008)",
+      "input": {
+        "value": 429
+      },
+      "expect": {
+        "value": "disallow_all"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.500",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "5xx: unreachable, disallow all",
+      "input": {
+        "value": 500
+      },
+      "expect": {
+        "value": "disallow_all"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.503",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "5xx",
+      "input": {
+        "value": 503
+      },
+      "expect": {
+        "value": "disallow_all"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.100",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "Not a final status: unreachable",
+      "input": {
+        "value": 100
+      },
+      "expect": {
+        "value": "disallow_all"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.199",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "Not a final status",
+      "input": {
+        "value": 199
+      },
+      "expect": {
+        "value": "disallow_all"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.600",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "Out of range: unreachable",
+      "input": {
+        "value": 600
+      },
+      "expect": {
+        "value": "disallow_all"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "status.0",
+      "op": "status_policy",
+      "level": "core",
+      "group": "status_policy",
+      "description": "Out of range",
+      "input": {
+        "value": 0
+      },
+      "expect": {
+        "value": "disallow_all"
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.ok",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch",
+      "description": "200: parsed",
+      "input": {
+        "value": {
+          "origin": "https://example.com",
+          "responses": {
+            "https://example.com/robots.txt": {
+              "status": 200,
+              "body_base64": "VXNlci1hZ2VudDogKgpEaXNhbGxvdzogL3ByaXZhdGUK"
+            }
+          }
+        }
+      },
+      "expect": {
+        "value": {
+          "policy": "parsed",
+          "status": 200,
+          "robots": {
+            "groups": [
+              {
+                "user_agents": [
+                  "*"
+                ],
+                "rules": [
+                  {
+                    "allow": false,
+                    "pattern": "/private",
+                    "line": 2
+                  }
+                ],
+                "crawl_delay": null
+              }
+            ],
+            "sitemaps": [],
+            "truncated": false
+          }
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.not_found",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch",
+      "description": "404: allow all",
+      "input": {
+        "value": {
+          "origin": "https://example.com",
+          "responses": {
+            "https://example.com/robots.txt": {
+              "status": 404
+            }
+          }
+        }
+      },
+      "expect": {
+        "value": {
+          "policy": "allow_all",
+          "status": 404,
+          "robots": null
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.server_error",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch",
+      "description": "503: disallow all",
+      "input": {
+        "value": {
+          "origin": "https://example.com",
+          "responses": {
+            "https://example.com/robots.txt": {
+              "status": 503
+            }
+          }
+        }
+      },
+      "expect": {
+        "value": {
+          "policy": "disallow_all",
+          "status": 503,
+          "robots": null
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.network_error",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch",
+      "description": "Unreachable: disallow all",
+      "input": {
+        "value": {
+          "origin": "https://example.com",
+          "responses": {
+            "https://example.com/robots.txt": {
+              "error": "network"
+            }
+          }
+        }
+      },
+      "expect": {
+        "value": {
+          "policy": "disallow_all",
+          "status": null,
+          "robots": null
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.redirect",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch",
+      "description": "One redirect, followed",
+      "input": {
+        "value": {
+          "origin": "https://example.com",
+          "responses": {
+            "https://example.com/robots.txt": {
+              "status": 301,
+              "location": "https://www.example.com/robots.txt"
+            },
+            "https://www.example.com/robots.txt": {
+              "status": 200,
+              "body_base64": "VXNlci1hZ2VudDogKgpEaXNhbGxvdzogL3ByaXZhdGUK"
+            }
+          }
+        }
+      },
+      "expect": {
+        "value": {
+          "policy": "parsed",
+          "status": 200,
+          "robots": {
+            "groups": [
+              {
+                "user_agents": [
+                  "*"
+                ],
+                "rules": [
+                  {
+                    "allow": false,
+                    "pattern": "/private",
+                    "line": 2
+                  }
+                ],
+                "crawl_delay": null
+              }
+            ],
+            "sitemaps": [],
+            "truncated": false
+          }
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.redirect_relative",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch",
+      "description": "A relative Location",
+      "input": {
+        "value": {
+          "origin": "https://example.com",
+          "responses": {
+            "https://example.com/robots.txt": {
+              "status": 302,
+              "location": "/r/robots.txt"
+            },
+            "https://example.com/r/robots.txt": {
+              "status": 200,
+              "body_base64": "VXNlci1hZ2VudDogKgpEaXNhbGxvdzogL3ByaXZhdGUK"
+            }
+          }
+        }
+      },
+      "expect": {
+        "value": {
+          "policy": "parsed",
+          "status": 200,
+          "robots": {
+            "groups": [
+              {
+                "user_agents": [
+                  "*"
+                ],
+                "rules": [
+                  {
+                    "allow": false,
+                    "pattern": "/private",
+                    "line": 2
+                  }
+                ],
+                "crawl_delay": null
+              }
+            ],
+            "sitemaps": [],
+            "truncated": false
+          }
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.redirects_five",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch",
+      "description": "Five redirects: still followed",
+      "input": {
+        "value": {
+          "origin": "https://example.com",
+          "responses": {
+            "https://example.com/r1": {
+              "status": 301,
+              "location": "/r2"
+            },
+            "https://example.com/r2": {
+              "status": 301,
+              "location": "/r3"
+            },
+            "https://example.com/r3": {
+              "status": 301,
+              "location": "/r4"
+            },
+            "https://example.com/r4": {
+              "status": 301,
+              "location": "/r5"
+            },
+            "https://example.com/robots.txt": {
+              "status": 301,
+              "location": "/r1"
+            },
+            "https://example.com/r5": {
+              "status": 200,
+              "body_base64": "VXNlci1hZ2VudDogKgpEaXNhbGxvdzogL3ByaXZhdGUK"
+            }
+          }
+        }
+      },
+      "expect": {
+        "value": {
+          "policy": "parsed",
+          "status": 200,
+          "robots": {
+            "groups": [
+              {
+                "user_agents": [
+                  "*"
+                ],
+                "rules": [
+                  {
+                    "allow": false,
+                    "pattern": "/private",
+                    "line": 2
+                  }
+                ],
+                "crawl_delay": null
+              }
+            ],
+            "sitemaps": [],
+            "truncated": false
+          }
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.redirects_six",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch",
+      "description": "Six redirects: unavailable, allow all (D-007)",
+      "input": {
+        "value": {
+          "origin": "https://example.com",
+          "responses": {
+            "https://example.com/r1": {
+              "status": 301,
+              "location": "/r2"
+            },
+            "https://example.com/r2": {
+              "status": 301,
+              "location": "/r3"
+            },
+            "https://example.com/r3": {
+              "status": 301,
+              "location": "/r4"
+            },
+            "https://example.com/r4": {
+              "status": 301,
+              "location": "/r5"
+            },
+            "https://example.com/r5": {
+              "status": 301,
+              "location": "/r6"
+            },
+            "https://example.com/robots.txt": {
+              "status": 301,
+              "location": "/r1"
+            },
+            "https://example.com/r6": {
+              "status": 200,
+              "body_base64": "VXNlci1hZ2VudDogKgpEaXNhbGxvdzogL3ByaXZhdGUK"
+            }
+          }
+        }
+      },
+      "expect": {
+        "value": {
+          "policy": "allow_all",
+          "status": 301,
+          "robots": null
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.redirect_no_location",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch",
+      "description": "A redirect without Location: unavailable, allow all",
+      "input": {
+        "value": {
+          "origin": "https://example.com",
+          "responses": {
+            "https://example.com/robots.txt": {
+              "status": 302
+            }
+          }
+        }
+      },
+      "expect": {
+        "value": {
+          "policy": "allow_all",
+          "status": 302,
+          "robots": null
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.origin_trailing_slash",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch",
+      "description": "Trailing slash on the origin",
+      "input": {
+        "value": {
+          "origin": "https://example.com/",
+          "responses": {
+            "https://example.com/robots.txt": {
+              "status": 200,
+              "body_base64": "VXNlci1hZ2VudDogKgpEaXNhbGxvdzogL3ByaXZhdGUK"
+            }
+          }
+        }
+      },
+      "expect": {
+        "value": {
+          "policy": "parsed",
+          "status": 200,
+          "robots": {
+            "groups": [
+              {
+                "user_agents": [
+                  "*"
+                ],
+                "rules": [
+                  {
+                    "allow": false,
+                    "pattern": "/private",
+                    "line": 2
+                  }
+                ],
+                "crawl_delay": null
+              }
+            ],
+            "sitemaps": [],
+            "truncated": false
+          }
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.error.path",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch.error",
+      "description": "Not an origin",
+      "input": {
+        "value": {
+          "origin": "https://example.com/x",
+          "responses": {}
+        }
+      },
+      "expect": {
+        "error": {
+          "kind": "invalid_input",
+          "code": "robotstxt.invalid_origin"
+        }
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.error.scheme",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch.error",
+      "description": "Not an origin",
+      "input": {
+        "value": {
+          "origin": "ftp://example.com",
+          "responses": {}
+        }
+      },
+      "expect": {
+        "error": {
+          "kind": "invalid_input",
+          "code": "robotstxt.invalid_origin"
+        }
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.error.query",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch.error",
+      "description": "Not an origin",
+      "input": {
+        "value": {
+          "origin": "https://example.com?a",
+          "responses": {}
+        }
+      },
+      "expect": {
+        "error": {
+          "kind": "invalid_input",
+          "code": "robotstxt.invalid_origin"
+        }
+      },
+      "compare": "exact",
+      "source": "spec"
+    }
+  ]
+}
