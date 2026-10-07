@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -30,7 +31,7 @@ from pathlib import Path
 from protego import Protego
 
 ORACLE = {"language": "python", "package": "protego", "version": "0.7.0", "script": "generate/generate.py"}
-SPEC_VERSION = "0.1.0"
+SPEC_VERSION = "0.1.2"
 GENERATED_AT = "2026-10-06T00:00:00Z"  # bump by hand when cases change
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -57,8 +58,9 @@ class SpecError(Exception):
 @dataclass
 class Rule:
     allow: bool
-    pattern: str  # as written, trimmed
+    pattern: str  # as written, trimmed; invalid UTF-8 replaced with U+FFFD
     line: int
+    raw: bytes = b""  # the pattern's original bytes, which matching uses (spec §2)
 
     def json(self):
         return {"allow": self.allow, "pattern": self.pattern, "line": self.line}
@@ -162,7 +164,7 @@ def spec_parse(data: bytes, max_bytes: int = MAX_BYTES) -> RobotsFile:
                 continue  # rules before any user-agent line are ignored
             collecting_agents = False  # allow/disallow (even empty) ends the agent list
             if value:
-                current.rules.append(Rule(key == b"allow", text(value), n))
+                current.rules.append(Rule(key == b"allow", text(value), n, value))
         elif key == b"sitemap":
             if value:
                 sitemaps.append(text(value))
@@ -170,8 +172,8 @@ def spec_parse(data: bytes, max_bytes: int = MAX_BYTES) -> RobotsFile:
             if current is None:
                 continue
             collecting_agents = False  # a group member, like allow/disallow (D-009)
-            if current.crawl_delay is None and DELAY.fullmatch(text(value)):
-                current.crawl_delay = float(value)
+            if current.crawl_delay is None and DELAY.fullmatch(text(value)) and math.isfinite(float(value)):
+                current.crawl_delay = float(value)  # a value too large for f64 is skipped
         # anything else is ignored and doesn't end the agent list
     return RobotsFile(groups, sitemaps, truncated)
 
@@ -262,7 +264,7 @@ def spec_matching_rule(robots: RobotsFile, ua: str, path: str) -> Rule | None:
     best_len = -1
     for g in selected_groups(robots, ua):
         for r in g.rules:
-            p = normalize(r.pattern.encode("utf-8"))
+            p = normalize(r.raw)
             if not pattern_matches(p, norm):
                 continue
             if len(p) > best_len or (len(p) == best_len and r.allow and not best.allow):
@@ -297,7 +299,7 @@ def spec_status_policy(status: int) -> str:
 # Spec transcription: fetch (io), over scripted responses
 # ---------------------------------------------------------------------------
 
-ORIGIN = re.compile(r"https?://[^/?#\s]+/?")
+ORIGIN = re.compile(r"https?://[^/?#@\s]+/?")  # host and optional port: no userinfo (spec §3.6)
 
 
 def resolve(base: str, location: str) -> str:
@@ -531,6 +533,10 @@ def build() -> None:
                  "%7E is an unreserved character: decoded before comparing (RFC §2.2.2; Google says not; D-004)")
     allowed_case("encoding.unreserved_rule_letters", enc + "/foo/bar/%62%61%7A\n", G, "/foo/bar/baz",
                  "Encoded unreserved letters match the plain path (Google says not; D-004)", google="ID_Encoding")
+    allowed_case("encoding.invalid_utf8_rule", b"User-agent: *\nDisallow: /caf\xe9\n", G, "/caf%E9",
+                 "A rule's invalid UTF-8 byte matches by its original byte, not by the U+FFFD it's reported with")
+    allowed_case("encoding.invalid_utf8_rule_not_fffd", b"User-agent: *\nDisallow: /caf\xe9\n", G, "/caf%EF%BF%BD",
+                 "The reported U+FFFD isn't what matches (D-004)", differs="matches the U+FFFD replacement text")
     allowed_case("encoding.reserved_not_decoded", "User-agent: *\nDisallow: /a%2Fb\n", G, "/a/b", "%2F is reserved: not decoded")
 
     # --- matching_rule: which rule decided
@@ -567,6 +573,10 @@ def build() -> None:
     parse_case("parse.sitemaps_in_order", "Sitemap: https://a.example/1.xml\nUser-agent: *\nSitemap: https://a.example/2.xml\nDisallow: /x\n",
                "Every sitemap, in file order; sitemap lines don't belong to groups")
     parse_case("parse.invalid_utf8", b"User-agent: *\nDisallow: /caf\xe9\n", "Invalid UTF-8 is tolerated; the value is reported with U+FFFD")
+    parse_case("parse.invalid_utf8_subparts", b"User-agent: *\nDisallow: /a\xc0\x80b\xe2\x82c\xf0\x9f\x98d\xed\xa0\x80e\n",
+               "One U+FFFD per maximal invalid subpart (Unicode's recommended practice, as Python, Rust and Swift do)")
+    parse_case("parse.crawl_delay_not_finite", "User-agent: a\nCrawl-delay: " + "9" * 400 + "\nCrawl-delay: 4\nDisallow: /\n",
+               "A crawl-delay too large for f64 is skipped, like any invalid value")
     parse_case("parse.crawl_delay_invalid", "User-agent: a\nCrawl-delay: soon\nCrawl-delay: -1\nCrawl-delay: 3\nDisallow: /\n",
                "Crawl-delay values that aren't non-negative decimals are skipped; the first valid one is kept")
     body = "User-agent: *\nDisallow: /a\nDisallow: /b\n"
@@ -623,7 +633,8 @@ def build() -> None:
         add({"id": cid, "op": "fetch", "level": "io", "group": "fetch", "description": desc,
              "input": {"value": {"origin": origin, "responses": responses}},
              "expect": {"value": spec_fetch(origin, responses)}, "compare": "json_equal", "source": "spec"})
-    for cid, origin in [("fetch.error.path", O + "/x"), ("fetch.error.scheme", "ftp://example.com"), ("fetch.error.query", O + "?a")]:
+    for cid, origin in [("fetch.error.path", O + "/x"), ("fetch.error.scheme", "ftp://example.com"), ("fetch.error.query", O + "?a"),
+                       ("fetch.error.userinfo", "https://user:secret@example.com")]:
         try:
             spec_fetch(origin, {})
             raise AssertionError(cid)

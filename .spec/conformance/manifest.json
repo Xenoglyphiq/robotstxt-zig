@@ -1,6 +1,6 @@
 {
   "capability": "robotstxt",
-  "spec_version": "0.1.0",
+  "spec_version": "0.1.2",
   "oracle": {
     "language": "python",
     "package": "protego",
@@ -1355,6 +1355,44 @@
       "source": "oracle"
     },
     {
+      "id": "encoding.invalid_utf8_rule",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "encoding",
+      "description": "A rule's invalid UTF-8 byte matches by its original byte, not by the U+FFFD it's reported with",
+      "input": {
+        "base64": "VXNlci1hZ2VudDogKgpEaXNhbGxvdzogL2NhZukK",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/caf%E9"
+        }
+      },
+      "expect": {
+        "value": false
+      },
+      "compare": "exact",
+      "source": "oracle"
+    },
+    {
+      "id": "encoding.invalid_utf8_rule_not_fffd",
+      "op": "is_allowed",
+      "level": "core",
+      "group": "encoding",
+      "description": "The reported U+FFFD isn't what matches (D-004) (protego differs: matches the U+FFFD replacement text)",
+      "input": {
+        "base64": "VXNlci1hZ2VudDogKgpEaXNhbGxvdzogL2NhZukK",
+        "args": {
+          "user_agent": "FooBot",
+          "path": "/caf%EF%BF%BD"
+        }
+      },
+      "expect": {
+        "value": true
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
       "id": "encoding.reserved_not_decoded",
       "op": "is_allowed",
       "level": "core",
@@ -2016,6 +2054,72 @@
                 }
               ],
               "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.invalid_utf8_subparts",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "One U+FFFD per maximal invalid subpart (Unicode's recommended practice, as Python, Rust and Swift do)",
+      "input": {
+        "base64": "VXNlci1hZ2VudDogKgpEaXNhbGxvdzogL2HAgGLigmPwn5hk7aCAZQo="
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "*"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/a\ufffd\ufffdb\ufffdc\ufffdd\ufffd\ufffd\ufffde",
+                  "line": 2
+                }
+              ],
+              "crawl_delay": null
+            }
+          ],
+          "sitemaps": [],
+          "truncated": false
+        }
+      },
+      "compare": "json_equal",
+      "source": "spec"
+    },
+    {
+      "id": "parse.crawl_delay_not_finite",
+      "op": "parse",
+      "level": "core",
+      "group": "parse",
+      "description": "A crawl-delay too large for f64 is skipped, like any invalid value",
+      "input": {
+        "value": "User-agent: a\nCrawl-delay: 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999\nCrawl-delay: 4\nDisallow: /\n"
+      },
+      "expect": {
+        "value": {
+          "groups": [
+            {
+              "user_agents": [
+                "a"
+              ],
+              "rules": [
+                {
+                  "allow": false,
+                  "pattern": "/",
+                  "line": 4
+                }
+              ],
+              "crawl_delay": 4.0
             }
           ],
           "sitemaps": [],
@@ -2896,6 +3000,27 @@
       "input": {
         "value": {
           "origin": "https://example.com?a",
+          "responses": {}
+        }
+      },
+      "expect": {
+        "error": {
+          "kind": "invalid_input",
+          "code": "robotstxt.invalid_origin"
+        }
+      },
+      "compare": "exact",
+      "source": "spec"
+    },
+    {
+      "id": "fetch.error.userinfo",
+      "op": "fetch",
+      "level": "io",
+      "group": "fetch.error",
+      "description": "Not an origin",
+      "input": {
+        "value": {
+          "origin": "https://user:secret@example.com",
           "responses": {}
         }
       },

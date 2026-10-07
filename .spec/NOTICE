@@ -1,0 +1,10 @@
+robots.txt spec and conformance cases
+Copyright 2026 Xenoglyphiq contributors
+
+Some conformance cases (those whose description names a Google robots_test.cc
+test) are translated from the tests of google/robotstxt:
+
+  https://github.com/google/robotstxt
+  Copyright 2019 Google LLC
+  Licensed under the Apache License, Version 2.0
+  https://www.apache.org/licenses/LICENSE-2.0

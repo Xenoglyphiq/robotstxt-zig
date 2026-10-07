@@ -1,6 +1,6 @@
 # robots.txt for Zig
 
-Parse robots.txt files and decide whether a crawler may fetch a path, which rule decided, and what an HTTP status for the file means; fetch an origin's `/robots.txt` over HTTP or any transport you plug in. Implements RFC 9309 · Spec v0.1.0 · Conformance: **core ✓ io ✓ full ✓** (125/125)
+Parse robots.txt files and decide whether a crawler may fetch a path, which rule decided, and what an HTTP status for the file means; fetch an origin's `/robots.txt` over HTTP or any transport you plug in. Implements RFC 9309 · Spec v0.1.2 · Conformance: **core ✓ io ✓ full ✓** (130/130)
 
 > **`Crawl-delay` is an extension, not RFC 9309.** It's parsed and returned by `crawlDelay`, kept apart from the rules, and never affects `isAllowed`. A group keeps its first value that is a non-negative decimal and finite as an `f64`.
 
@@ -153,4 +153,4 @@ Not recorded yet. The spec's bench input arrives in spec 0.1.x; the timing again
 
 ## License
 
-MIT OR Apache-2.0
+MIT OR Apache-2.0. Some conformance cases in `.spec/` are translated from Google's `robotstxt` tests (Apache-2.0); see `.spec/NOTICE`.

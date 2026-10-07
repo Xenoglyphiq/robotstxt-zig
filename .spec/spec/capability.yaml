@@ -2,7 +2,7 @@
 id: robotstxt
 name: robots.txt
 summary: "Parse robots.txt files and decide whether a crawler may fetch a path, per RFC 9309 (the Robots Exclusion Protocol)."
-spec_version: 0.1.0
+spec_version: 0.1.2
 
 implements:
   - name: RFC 9309 (Robots Exclusion Protocol)
@@ -134,7 +134,7 @@ conformance:
   levels: [core, io, full]
 
 performance:
-  reference: "To be pinned with the bench input (a compiled Google-compatible parser)"
+  reference: "Rust texting_robots =0.2.2: parse bench/robots.txt per crawler and is_allowed for 10,000 lookups (bench/README.md)"
   target: within 2x of reference
 
 ports:
